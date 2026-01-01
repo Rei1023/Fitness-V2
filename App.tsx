@@ -1,8 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BodyPart, ViewState, WorkoutPlan, HistoryRecord, ExerciseCategory } from './types';
 import { PARTS_DISPLAY } from './constants';
 import { generateWorkout } from './services/workoutGenerator';
 import Metronome from './components/Metronome';
+
+// --- Helpers ---
+const parseDuration = (reps?: string): number | null => {
+  if (!reps) return null;
+  if (reps.includes('秒')) return parseInt(reps) || 0;
+  if (reps.includes('分鐘') || reps.includes('min')) return (parseInt(reps) || 0) * 60;
+  return null;
+};
+
+const formatTime = (seconds: number): string => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
 
 // --- Icons (Matching Prototype SVGs) ---
 const Icons = {
@@ -18,8 +32,124 @@ const Icons = {
   Timer: () => <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd"/></svg>,
   Swap: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>,
   Plus: () => <span className="text-xl sm:text-2xl font-bold">+</span>,
-  Minus: () => <span className="text-xl sm:text-2xl font-bold">−</span>
+  Minus: () => <span className="text-xl sm:text-2xl font-bold">−</span>,
+  Down: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>,
+  Up: () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path></svg>
 }
+
+// Extract Timer Ring to prevent re-render glitches and handle advanced animation
+const LoadingRing = React.memo(({ isRunning }: { isRunning: boolean }) => {
+  const center = 70;
+  const radius = 50;
+  const circumference = 2 * Math.PI * radius;
+  
+  // Refs for animation state
+  const progressRef = useRef(0); // 0 to Infinity (represents cycles)
+  const lastTimeRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
+  
+  // Refs for DOM elements to avoid React render cycle for 60fps
+  const circleRef = useRef<SVGCircleElement>(null);
+  const headGroupRef = useRef<SVGGElement>(null);
+
+  const CYCLE_DURATION = 2000; // 2 seconds per full rotation
+
+  const animate = useCallback((time: number) => {
+    if (lastTimeRef.current !== 0) {
+      const delta = time - lastTimeRef.current;
+      progressRef.current += delta / CYCLE_DURATION;
+    }
+    lastTimeRef.current = time;
+
+    // Update Visuals
+    const progress = progressRef.current;
+    
+    // 1. Head Rotation (Linear clockwise)
+    const rotation = (progress * 360) % 360;
+    
+    // 2. Stroke Animation
+    // Logic: 
+    // Cycle 0 (0->1): Eat (Full -> Empty). 
+    //   - We use pattern `Line Gap` (length C, C). 
+    //   - Offset 0 -> -C moves the pattern "forward" (clockwise).
+    //   - Start: Line visible. End: Gap visible. Result: Ring eaten clockwise.
+    // Cycle 1 (1->2): Fill (Empty -> Full).
+    //   - Offset -C -> -2C.
+    //   - Start: Gap visible. End: Next Line segment visible. Result: Ring fills clockwise.
+    // Formula: continuous negative offset handles this alternation automatically.
+    const offset = -progress * circumference;
+
+    if (headGroupRef.current) {
+        headGroupRef.current.style.transform = `rotate(${rotation}deg)`;
+    }
+    if (circleRef.current) {
+        circleRef.current.style.strokeDashoffset = `${offset}`;
+    }
+
+    rafRef.current = requestAnimationFrame(animate);
+  }, [circumference]);
+
+  useEffect(() => {
+    if (isRunning) {
+      lastTimeRef.current = 0; // Reset delta calc for first frame resume
+      rafRef.current = requestAnimationFrame(animate);
+    } else {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      lastTimeRef.current = 0;
+    }
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [isRunning, animate]);
+
+  // Initial Setup & Static Render Update
+  useEffect(() => {
+      if (circleRef.current && headGroupRef.current) {
+         const progress = progressRef.current;
+         const rotation = (progress * 360) % 360;
+         const offset = -progress * circumference;
+         
+         headGroupRef.current.style.transform = `rotate(${rotation}deg)`;
+         circleRef.current.style.strokeDashoffset = `${offset}`;
+      }
+  }, [circumference]); // Run on mount
+
+  return (
+     <svg className="w-full h-full overflow-visible" viewBox="0 0 140 140">
+        {/* Background Track (Always Full) */}
+        <circle cx={center} cy={center} r={radius} strokeWidth="2" fill="transparent" className="stroke-ui-border opacity-20" />
+        
+        {/* Dynamic Stroke */}
+        <circle 
+            ref={circleRef}
+            cx={center} 
+            cy={center} 
+            r={radius} 
+            stroke="currentColor" 
+            strokeWidth="4" 
+            fill="transparent" 
+            strokeDasharray={`${circumference} ${circumference}`}
+            strokeDashoffset="0"
+            strokeLinecap="round"
+            className="text-brand drop-shadow-[0_0_2px_rgba(var(--color-brand-rgb),0.5)]"
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }} // Start at top
+        />
+        
+        {/* Head Group (Rotates) */}
+        <g ref={headGroupRef} className="origin-center" style={{ transformOrigin: '70px 70px', transform: 'rotate(0deg)' }}>
+             {/* Head positioned at Top (12 o'clock) relative to group center */}
+             <g className="transition-opacity duration-300">
+                {/* Glow Halo */}
+                <circle cx="70" cy="20" r="8" fill="currentColor" className="text-brand opacity-40 blur-sm" />
+                {/* Main Head */}
+                <circle cx="70" cy="20" r="5" fill="currentColor" className="text-brand-text filter drop-shadow-[0_0_4px_rgba(var(--color-brand-rgb),1)]" />
+                {/* Inner Eye */}
+                <circle cx="70" cy="20" r="2" fill="#FFFFFF" className="opacity-90" />
+             </g>
+        </g>
+     </svg>
+  );
+});
 
 const App = () => {
   // State
@@ -32,6 +162,15 @@ const App = () => {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [history, setHistory] = useState<HistoryRecord[]>([]);
   
+  // Timer State
+  const [timerValue, setTimerValue] = useState(0);
+  const [initialTimerValue, setInitialTimerValue] = useState(0);
+  const [timerMode, setTimerMode] = useState<'countdown' | 'stopwatch'>('stopwatch');
+  const [isResting, setIsResting] = useState(false);
+  
+  // Countdown State
+  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+
   // Effects
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -52,6 +191,69 @@ const App = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  // Timer Tick Effect
+  useEffect(() => {
+    let interval: number;
+    if (isTimerRunning && view === ViewState.FOCUS) {
+        interval = window.setInterval(() => {
+            setTimerValue(prev => {
+                if (timerMode === 'countdown') {
+                    if (prev <= 0) {
+                        setIsTimerRunning(false);
+                        return 0;
+                    }
+                    return prev - 1;
+                } else {
+                    return prev + 1;
+                }
+            });
+        }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerRunning, view, timerMode]);
+
+  // Countdown Timer Effect
+  useEffect(() => {
+    let timeout: number;
+    if (countdownValue !== null) {
+        if (countdownValue > 0) {
+            timeout = window.setTimeout(() => {
+                setCountdownValue(prev => (prev !== null ? prev - 1 : null));
+            }, 1000);
+        } else {
+            setCountdownValue(null);
+            setIsTimerRunning(true);
+        }
+    }
+    return () => clearTimeout(timeout);
+  }, [countdownValue]);
+
+  // Initialize Timer Logic when Exercise changes or Focus mode starts
+  const resetTimerForCurrentExercise = useCallback(() => {
+    if (!workout) return;
+    const ex = workout.exercises[activeExerciseIndex];
+    const duration = parseDuration(ex.reps);
+    
+    if (duration) {
+        setTimerValue(duration);
+        setInitialTimerValue(duration);
+        setTimerMode('countdown');
+    } else {
+        setTimerValue(0);
+        setInitialTimerValue(0);
+        setTimerMode('stopwatch');
+    }
+  }, [workout, activeExerciseIndex]);
+
+  useEffect(() => {
+    if (view === ViewState.FOCUS && workout) {
+        resetTimerForCurrentExercise();
+        setIsTimerRunning(false);
+        setIsResting(false); 
+        setCountdownValue(null); // Reset countdown
+    }
+  }, [activeExerciseIndex, workout, view, resetTimerForCurrentExercise]);
+
   // Actions
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   
@@ -71,13 +273,30 @@ const App = () => {
 
   const startFocusMode = (index?: number) => {
     if (typeof index === 'number') setActiveExerciseIndex(index);
-    setIsTimerRunning(false);
     setView(ViewState.FOCUS);
   };
 
   const closeFocusMode = () => {
     setIsTimerRunning(false);
+    setCountdownValue(null);
     setView(ViewState.PLAN);
+  };
+
+  const handleRest = () => {
+    // Start Rest Mode
+    setCountdownValue(null); // Ensure no countdown overlap
+    setIsResting(true);
+    setTimerValue(0);
+    setTimerMode('stopwatch');
+    setInitialTimerValue(0);
+    setIsTimerRunning(true); // Auto-start rest timer
+  };
+
+  const handleStartWorkoutFromRest = () => {
+    // End Rest Mode and Start Workout Timer with Countdown
+    setIsResting(false);
+    resetTimerForCurrentExercise();
+    setCountdownValue(3); // Start countdown
   };
 
   const completeCurrentExercise = () => {
@@ -87,7 +306,7 @@ const App = () => {
        finishWorkout();
      } else {
        setActiveExerciseIndex(prev => prev + 1);
-       setIsTimerRunning(false);
+       // Timer reset handled by useEffect
      }
   };
 
@@ -326,7 +545,7 @@ const App = () => {
     );
   };
 
-  const FocusView = () => {
+  const RenderFocusView = () => {
     const currentEx = workout?.exercises[activeExerciseIndex];
     if (!currentEx) return null;
 
@@ -360,49 +579,71 @@ const App = () => {
                          <Icons.Search /> 動作查詢
                      </a>
                 </div>
-                <div className="text-6xl mt-4 filter drop-shadow-lg">{currentEx.emoji}</div>
              </div>
 
              {/* SVG Circle Progress */}
-             <div className="relative w-52 h-52 sm:w-64 sm:h-64 flex items-center justify-center shrink-0 z-10 mb-6">
-                 <svg className="w-full h-full transform -rotate-90 drop-shadow-xl">
-                    <circle cx="50%" cy="50%" r="46%" strokeWidth="3" fill="transparent" className="stroke-ui-border opacity-40" />
-                    {isTimerRunning && <circle cx="50%" cy="50%" r="46%" stroke="currentColor" strokeWidth="3" fill="transparent" className="text-brand filter drop-shadow-[0_0_15px_var(--color-brand)] animate-[pulse-slow_3s_ease-in-out_infinite]" strokeDasharray="100 100" />}
-                 </svg>
+             <div className="relative w-64 h-64 sm:w-72 sm:h-72 flex items-center justify-center shrink-0 z-10 mb-6">
+                 {/* Memoized Ring Component */}
+                 <LoadingRing isRunning={isTimerRunning} key={`${activeExerciseIndex}-${isResting ? 'rest' : 'work'}`} />
+                 
                  <div className="absolute flex flex-col items-center">
                      <span className="text-5xl sm:text-6xl font-mono font-bold tracking-tighter text-ui-text tabular-nums drop-shadow-md">
-                        {isTimerRunning ? 'ACTIVE' : 'READY'}
+                        {countdownValue !== null ? countdownValue : formatTime(timerValue)}
                      </span>
                      <span className={`text-[8px] uppercase tracking-[0.3em] mt-2 font-bold ${isTimerRunning ? 'text-brand-text animate-pulse' : 'text-ui-sub'}`}>
-                         {isTimerRunning ? 'WORKING' : 'PAUSED'}
+                         {countdownValue !== null
+                            ? 'GET READY'
+                            : (isResting 
+                                ? 'RESTING' 
+                                : (isTimerRunning 
+                                    ? 'TIMING' 
+                                    : (timerMode === 'countdown' && timerValue > 0 ? 'READY' : 'STOPWATCH')
+                                  )
+                              )
+                         }
                      </span>
                  </div>
              </div>
 
              {/* Controls Row */}
              <div className="flex flex-col items-center gap-4 z-10 w-full max-w-xs mb-4">
-                 <div className="glass-panel px-5 py-3 rounded-xl border-brand/20 shadow-sm w-full text-center">
-                    <p className="text-[10px] text-ui-sub text-center tracking-wide font-medium">目標: <span className="font-bold text-brand ml-1">{currentEx.reps}</span></p>
-                 </div>
-                 
-                 <Metronome isPlaying={isTimerRunning} />
+                 <Metronome isPlaying={isTimerRunning && !isResting} />
              </div>
         </div>
 
         {/* Footer Controls */}
         <div className="flex-none p-5 pb-8 bg-white/5 border-t border-ui-border z-20 backdrop-blur-md">
              <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-                 <button 
-                   onClick={() => setIsTimerRunning(!isTimerRunning)} 
-                   className={isTimerRunning 
-                     ? "glass-btn col-span-1 bg-ui-surface hover:bg-ui-card border border-ui-border text-ui-text font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-colors flex items-center justify-center gap-2"
-                     : "glass-btn-primary col-span-1 text-white font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-all flex items-center justify-center gap-2"
-                   }
-                 >
-                     {isTimerRunning ? <><Icons.Pause /> 暫停</> : <><Icons.Play /> 開始</>}
-                 </button>
-                 <button onClick={() => { setIsTimerRunning(false); alert('Rest timer logic would go here'); }} className="glass-btn col-span-1 text-ui-text border border-ui-border font-bold py-3.5 rounded-2xl active:scale-95 text-base hover:bg-ui-surface transition-colors shadow-sm">
-                    休息 / 下一組
+                 {/* Left Button Logic */}
+                 {isResting ? (
+                    <button 
+                       onClick={handleStartWorkoutFromRest} 
+                       className="glass-btn-primary col-span-1 text-white font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-all flex items-center justify-center gap-2"
+                     >
+                       <Icons.Play /> 開始
+                     </button>
+                 ) : (
+                    <button 
+                       onClick={() => {
+                           if (countdownValue !== null) {
+                               setCountdownValue(null);
+                           } else if (isTimerRunning) {
+                               setIsTimerRunning(false);
+                           } else {
+                               setCountdownValue(3);
+                           }
+                       }} 
+                       className={isTimerRunning || countdownValue !== null
+                         ? "glass-btn col-span-1 bg-ui-surface hover:bg-ui-card border border-ui-border text-ui-text font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-colors flex items-center justify-center gap-2"
+                         : "glass-btn-primary col-span-1 text-white font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-all flex items-center justify-center gap-2"
+                       }
+                     >
+                         {countdownValue !== null ? <><Icons.Pause /> 取消</> : (isTimerRunning ? <><Icons.Pause /> 暫停</> : <><Icons.Play /> 開始</>)}
+                     </button>
+                 )}
+                 
+                 <button onClick={handleRest} className="glass-btn col-span-1 text-ui-text border border-ui-border font-bold py-3.5 rounded-2xl active:scale-95 text-base hover:bg-ui-surface transition-colors shadow-sm">
+                    休息
                  </button>
                  <button onClick={completeCurrentExercise} className="glass-btn col-span-2 text-brand-text font-bold py-3.5 rounded-2xl active:scale-95 mt-1 text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-brand-bg border border-brand/20 shadow-sm">
                     <span>完成此動作</span> <Icons.Check />
@@ -413,8 +654,11 @@ const App = () => {
     );
   };
 
-  const HistoryView = () => (
-    <MainLayout title="歷史紀錄" onBack={() => setView(ViewState.SETUP)} showHistory={false}>
+  const HistoryView = () => {
+    const [expandedId, setExpandedId] = useState<string | null>(null);
+
+    return (
+      <MainLayout title="歷史紀錄" onBack={() => setView(ViewState.SETUP)} showHistory={false}>
       <div className="flex flex-col gap-4 min-h-full pb-20 fade-in">
          <div className="space-y-1 mt-1 text-center">
             <h2 className="text-2xl font-bold text-ui-text tracking-tight drop-shadow-sm">歷史紀錄</h2>
@@ -423,32 +667,63 @@ const App = () => {
 
          <div className="space-y-3">
              {history.length === 0 && <div className="text-center py-10 text-ui-sub text-sm">尚無訓練紀錄</div>}
-             {history.map((record) => (
-               <div key={record.id} className="glass-panel p-4 rounded-2xl flex items-center justify-between shadow-sm cursor-pointer active:scale-95 transition-transform hover:bg-white/5 relative group">
-                  <div>
-                      <div className="text-[10px] text-ui-sub font-bold uppercase tracking-wide mb-1">{new Date(record.date).toLocaleDateString()}</div>
-                      <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-ui-text">{record.duration} min</span>
+             {history.map((record) => {
+               const isExpanded = expandedId === record.id;
+               
+               return (
+               <div 
+                  key={record.id} 
+                  onClick={() => setExpandedId(isExpanded ? null : record.id)}
+                  className={`glass-panel p-4 rounded-2xl flex flex-col transition-all relative group cursor-pointer ${isExpanded ? 'bg-white/10 ring-1 ring-brand/30' : 'hover:bg-white/5 active:scale-[0.98]'}`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                      <div>
+                          <div className="text-[10px] text-ui-sub font-bold uppercase tracking-wide mb-1">{new Date(record.date).toLocaleDateString()}</div>
+                          <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-ui-text">{record.duration} min</span>
+                          </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-brand-text bg-brand-bg px-2 py-1 rounded-full border border-brand/20">{record.completedRate}% 完成</span>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); deleteHistory(record.id); }} 
+                            className="glass-btn w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all border border-transparent hover:border-red-500/20"
+                          >
+                              <Icons.Trash />
+                          </button>
+                          <div className={`transition-transform duration-300 text-ui-sub ${isExpanded ? 'rotate-180' : ''}`}>
+                             <Icons.Down />
+                          </div>
                       </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-brand-text bg-brand-bg px-2 py-1 rounded-full border border-brand/20">{record.completedRate}% 完成</span>
-                      <button onClick={(e) => { e.stopPropagation(); deleteHistory(record.id); }} className="glass-btn w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-500/10 active:scale-90 transition-all border border-transparent hover:border-red-500/20">
-                          <Icons.Trash />
-                      </button>
-                  </div>
+                  
+                  {/* Expanded Detail View */}
+                  {isExpanded && (
+                      <div className="mt-4 pt-3 border-t border-ui-border fade-in">
+                          <h4 className="text-[10px] font-bold text-brand uppercase tracking-widest mb-2">訓練項目</h4>
+                          <div className="space-y-2">
+                              {record.exercises.map((ex, idx) => (
+                                  <div key={idx} className="flex justify-between items-center text-xs text-ui-sub px-1">
+                                      <span className="font-medium text-ui-text truncate pr-4">{idx + 1}. {ex.name}</span>
+                                      <span className="shrink-0 opacity-70 font-mono">{ex.reps}</span>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  )}
                </div>
-             ))}
+             )})}
          </div>
       </div>
     </MainLayout>
-  );
+    );
+  };
 
   return (
     <>
       {view === ViewState.SETUP && <SetupView />}
       {view === ViewState.PLAN && <PlanView />}
-      {view === ViewState.FOCUS && <FocusView />}
+      {view === ViewState.FOCUS && RenderFocusView()}
       {view === ViewState.HISTORY && <HistoryView />}
     </>
   );
