@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta id="meta-theme-color" name="theme-color" content="#F3F4F6">
+    <title>Fitness</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=PingFang+TC:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+                brand: {
+                    DEFAULT: 'var(--color-brand)',
+                    bg: 'var(--color-brand-bg)',
+                    text: 'var(--color-brand-text)',
+                    glow: 'var(--color-brand-glow)',
+                },
+                ui: {
+                    bg: 'var(--color-bg)',
+                    card: 'var(--color-card)',
+                    border: 'var(--color-border)',
+                    text: 'var(--color-text)',
+                    sub: 'var(--color-sub)',
+                    surface: 'var(--color-surface)'
+                }
+            },
+            fontFamily: {
+              sans: ['"PingFang TC"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'San Francisco', 'sans-serif'],
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            boxShadow: {
+                'glow': '0 0 25px -5px var(--color-brand-glow)',
+                'inner-light': 'inset 0 1px 0 0 var(--color-inner-light)',
+                'ios': '0 8px 30px -6px var(--shadow-color)',
+                'glass-btn': '0 8px 16px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      /* --- Design System Variables (From Prototype) --- */
+      :root {
+          /* Light Mode: Titanium Silver Metal */
+          --bg-top-color: #F3F4F6;
+
+          --color-bg: #E5E7EB; 
+          --color-card: rgba(255, 255, 255, 0.4); 
+          --color-surface: rgba(255, 255, 255, 0.2); 
+          
+          --color-text: #1F2937; 
+          --color-sub: #4B5563;  
+          --color-border: rgba(255, 255, 255, 0.6); 
+          
+          /* Fluorescent Orange Accent for Light Mode */
+          --color-brand: #FF5F1F; 
+          --color-brand-rgb: 255, 95, 31;
+          --color-brand-bg: rgba(255, 95, 31, 0.1);
+          --color-brand-text: #C2410C; 
+          --color-brand-glow: rgba(255, 95, 31, 0.5);
+          
+          --shadow-color: rgba(0, 0, 0, 0.1);
+          --color-inner-light: rgba(255, 255, 255, 0.8);
+          --glass-blur: 35px; 
+          
+          /* Light Metal Gradient */
+          --metal-bg: 
+              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"),
+              radial-gradient(circle at 30% 10%, rgba(255,255,255,0.9) 0%, transparent 50%),
+              repeating-linear-gradient(115deg, transparent 0px, transparent 2px, rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px),
+              linear-gradient(135deg, #F3F4F6 0%, #D1D5DB 100%);
+      }
+
+      :root.dark {
+          /* Dark Mode: Anodized Black Aluminum */
+          --bg-top-color: #1f2937;
+
+          --color-bg: #0F172A;      
+          --color-card: rgba(30, 41, 59, 0.3); 
+          --color-surface: rgba(255, 255, 255, 0.03); 
+          
+          --color-text: #F3F4F6;    
+          --color-sub: #94A3B8;     
+          
+          --color-border: rgba(255, 255, 255, 0.15); 
+          
+          /* Fluorescent Blue Accent for Dark Mode */
+          --color-brand: #00FFFF; 
+          --color-brand-rgb: 0, 255, 255;
+          --color-brand-bg: rgba(0, 255, 255, 0.15);
+          --color-brand-text: #00FFFF;
+          --color-brand-glow: rgba(0, 255, 255, 0.6);
+          
+          --shadow-color: rgba(0, 0, 0, 0.7);
+          --color-inner-light: rgba(255, 255, 255, 0.1);
+          
+          /* Dark Metal Gradient */
+          --metal-bg: 
+              url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E"),
+              radial-gradient(circle at 70% 0%, rgba(255,255,255,0.15) 0%, transparent 60%),
+              repeating-linear-gradient(115deg, transparent 0px, transparent 2px, rgba(255,255,255,0.06) 3px, rgba(255,255,255,0.06) 4px),
+              linear-gradient(to bottom, #1f2937 0%, #000000 100%);
+      }
+
+      html { 
+          background-color: var(--bg-top-color); 
+          transition: background-color 0.3s ease; 
+      }
+      
+      body { 
+          background: var(--metal-bg); 
+          background-attachment: fixed; 
+          color: var(--color-text); 
+          transition: color 0.3s ease; 
+      }
+
+      /* Scrollbar utilities */
+      ::-webkit-scrollbar { width: 0px; background: transparent; }
+      
+      /* --- Enhanced Glassmorphism Classes --- */
+      .glass-panel {
+          background: var(--color-card);
+          backdrop-filter: blur(var(--glass-blur));
+          -webkit-backdrop-filter: blur(var(--glass-blur));
+          border: 1px solid var(--color-border);
+          border-top: 1px solid rgba(255, 255, 255, 0.3);
+          border-left: 1px solid rgba(255, 255, 255, 0.15);
+          border-bottom-color: rgba(0, 0, 0, 0.1);
+          border-right-color: rgba(0, 0, 0, 0.05);
+          box-shadow: 0 8px 32px 0 var(--shadow-color), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+      }
+      
+      .glass-header {
+          background-color: rgba(255, 255, 255, 0.01); 
+          backdrop-filter: blur(var(--glass-blur));
+          -webkit-backdrop-filter: blur(var(--glass-blur));
+          border-bottom: 1px solid var(--color-border);
+      }
+
+      /* Button Styles */
+      .glass-btn {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.01) 100%);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+          border-top: 1px solid rgba(255, 255, 255, 0.5);
+          border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), inset 0 0 10px rgba(255, 255, 255, 0.05);
+          transition: all 0.2s ease;
+      }
+      
+      .glass-btn:active {
+          transform: scale(0.96);
+          background: rgba(255, 255, 255, 0.08);
+      }
+
+      .glass-btn-primary {
+          position: relative;
+          overflow: hidden;
+          background: linear-gradient(135deg, rgba(var(--color-brand-rgb), 0.7) 0%, rgba(var(--color-brand-rgb), 0.4) 100%);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+          border-top: 1px solid rgba(255, 255, 255, 0.7);
+          box-shadow: 0 10px 30px -5px var(--color-brand-glow), inset 0 0 20px rgba(255, 255, 255, 0.2);
+          color: #ffffff;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+          transition: all 0.2s ease;
+      }
+      
+      .glass-btn-primary:active {
+          transform: scale(0.96);
+          filter: brightness(0.9);
+      }
+
+      /* Range Slider */
+      input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+      input[type=range]:focus { outline: none; }
+      input[type=range]::-webkit-slider-runnable-track {
+          width: 100%; height: 6px; cursor: pointer; 
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 999px; 
+          border: 1px solid rgba(255,255,255,0.1);
+      }
+      input[type=range]::-webkit-slider-thumb {
+          -webkit-appearance: none; height: 24px; width: 24px; border-radius: 50%;
+          background: var(--color-text); cursor: pointer; margin-top: -9px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.5);
+          border: 2px solid var(--color-brand); 
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
+</head>
+  <body class="antialiased select-none overflow-hidden text-ui-text font-sans h-screen w-screen flex flex-col">
+    <!-- SVG Noise Filter is now in CSS data URI -->
+    <div id="root" class="h-full w-full"></div>
+  </body>
+</html>
