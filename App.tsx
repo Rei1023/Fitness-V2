@@ -217,16 +217,26 @@ const App = () => {
     let timeout: number;
     if (countdownValue !== null) {
       if (countdownValue > 0) {
+        // Continue countdown
         timeout = window.setTimeout(() => {
           setCountdownValue(prev => (prev !== null ? prev - 1 : null));
         }, 1000);
       } else {
+        // Countdown finished (0 -> Go)
+        // explicitly wait a moment on 0 if needed, or just start immediately. 
+        // Current behavior: shows 0 (or Go text) then switches.
+        // Let's hold 0 for a split second or transition immediately.
+        // The previous logic had a race condition.
+
+        // Critical: Reset timer to initial value before starting
+        setTimerValue(initialTimerValue);
+
         setCountdownValue(null);
         setIsTimerRunning(true);
       }
     }
     return () => clearTimeout(timeout);
-  }, [countdownValue]);
+  }, [countdownValue, initialTimerValue]);
 
   // Initialize Timer Logic when Exercise changes or Focus mode starts
   const resetTimerForCurrentExercise = useCallback(() => {
