@@ -67,3 +67,5 @@ npm run build
 - `src/`: 原始碼
 - `public/`: 靜態資源 
 - `.github/workflows/`: CI/CD 配置
+
+<!-- Trigger Redeploy -->
