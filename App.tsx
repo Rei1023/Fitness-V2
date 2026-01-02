@@ -213,28 +213,31 @@ const App = () => {
   }, [isTimerRunning, view, timerMode]);
 
   // Countdown Timer Effect
-  // Robust Countdown Logic
-  // 1. Stable Ticking Effect (Runs once when countdown starts)
+  // Robust Countdown Logic (Timestamp Delta Method)
+  // Uses high-frequency polling to check against start time, fixing mobile freeze issues.
   useEffect(() => {
-    let interval: number;
-    if (countdownValue !== null && countdownValue > 0) {
-      interval = window.setInterval(() => {
-        setCountdownValue(prev => {
-          if (prev === null) return null;
-          return prev > 0 ? prev - 1 : 0;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [countdownValue !== null]); // Only restart if we switch from null <-> number
+    if (countdownValue === null) return;
 
-  // 2. Completion Watcher (Triggers transition)
-  useEffect(() => {
-    if (countdownValue === 0) {
+    // Immediate transition if at 0
+    if (countdownValue <= 0) {
       setTimerValue(initialTimerValue);
       setCountdownValue(null);
       setIsTimerRunning(true);
+      return;
     }
+
+    // Start a fast polling loop to check if 1 second has passed
+    const startTime = Date.now();
+    const interval = window.setInterval(() => {
+      const delta = Date.now() - startTime;
+      if (delta >= 1000) {
+        // Force update regardless of how much time passed (even if frozen for 2s)
+        setCountdownValue(prev => (prev !== null ? prev - 1 : null));
+        clearInterval(interval);
+      }
+    }, 100); // Check every 100ms for precision
+
+    return () => clearInterval(interval);
   }, [countdownValue, initialTimerValue]);
 
   // Initialize Timer Logic when Exercise changes or Focus mode starts
