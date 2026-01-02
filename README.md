@@ -1,14 +1,19 @@
-# Fitness V2
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-這是一個使用 React + TypeScript + Vite 構建的健身訓練應用程式。
+# Run and deploy your AI Studio app
 
-## 專案設置 (Project Setup)
+This contains everything you need to run your app locally.
+
+View your app in AI Studio: https://ai.studio/apps/drive/1gmkCLjrSK_-hF3Bn_CqfRzEzqmaEhg3m
+
+## Run Locally
+
+**Prerequisites:**  Node.js
+
 
 ### 1. 安裝依賴 (Install Dependencies)
-
-請確保您已安裝 [Node.js](https://nodejs.org/) (建議 v18 或更高版本)。
-
-在專案根目錄執行：
 
 ```bash
 npm install
