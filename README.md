@@ -53,12 +53,12 @@ npm run build
 1. 安裝依賴 (`npm ci`)
 2. 構建專案 (`npm run build`)
 3. 上傳構建產物 (`dist`)
-4. 部署至 GitHub Pages
+4. 部署至 GitHub Pages  
 
 **注意**：請確保 GitHub Repository 的 Settings -> Pages -> Source 設置為 "GitHub Actions"。
 
 ## 專案結構
 
 - `src/`: 原始碼
-- `public/`: 靜態資源
+- `public/`: 靜態資源 
 - `.github/workflows/`: CI/CD 配置
