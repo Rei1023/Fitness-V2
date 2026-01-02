@@ -168,8 +168,7 @@ const App = () => {
   const [timerMode, setTimerMode] = useState<'countdown' | 'stopwatch'>('stopwatch');
   const [isResting, setIsResting] = useState(false);
 
-  // Countdown State
-  const [countdownValue, setCountdownValue] = useState<number | null>(null);
+
 
   // Effects
   useEffect(() => {
@@ -262,7 +261,7 @@ const App = () => {
       resetTimerForCurrentExercise();
       setIsTimerRunning(false);
       setIsResting(false);
-      setCountdownValue(null); // Reset countdown
+      setIsResting(false);
     }
   }, [activeExerciseIndex, workout, view, resetTimerForCurrentExercise]);
 
@@ -297,13 +296,11 @@ const App = () => {
 
   const closeFocusMode = () => {
     setIsTimerRunning(false);
-    setCountdownValue(null);
     setView(ViewState.PLAN);
   };
 
   const handleRest = () => {
     // Start Rest Mode
-    setCountdownValue(null); // Ensure no countdown overlap
     setIsResting(true);
     setTimerValue(0);
     setTimerMode('stopwatch');
@@ -612,17 +609,14 @@ const App = () => {
 
             <div className="absolute flex flex-col items-center">
               <span className="text-5xl sm:text-6xl font-mono font-bold tracking-tighter text-ui-text tabular-nums drop-shadow-md">
-                {countdownValue !== null ? countdownValue : formatTime(timerValue)}
+                {formatTime(timerValue)}
               </span>
               <span className={`text-[8px] uppercase tracking-[0.3em] mt-2 font-bold ${isTimerRunning ? 'text-brand-text animate-pulse' : 'text-ui-sub'}`}>
-                {countdownValue !== null
-                  ? 'GET READY'
-                  : (isResting
-                    ? 'RESTING'
-                    : (isTimerRunning
-                      ? 'TIMING'
-                      : (timerMode === 'countdown' && timerValue > 0 ? 'READY' : 'STOPWATCH')
-                    )
+                {isResting
+                  ? 'RESTING'
+                  : (isTimerRunning
+                    ? 'TIMING'
+                    : (timerMode === 'countdown' && timerValue > 0 ? 'READY' : 'STOPWATCH')
                   )
                 }
               </span>
@@ -649,20 +643,18 @@ const App = () => {
             ) : (
               <button
                 onClick={() => {
-                  if (countdownValue !== null) {
-                    setCountdownValue(null);
-                  } else if (isTimerRunning) {
+                  if (isTimerRunning) {
                     setIsTimerRunning(false);
                   } else {
-                    setCountdownValue(3);
+                    setIsTimerRunning(true);
                   }
                 }}
-                className={isTimerRunning || countdownValue !== null
+                className={isTimerRunning
                   ? "glass-btn col-span-1 bg-ui-surface hover:bg-ui-card border border-ui-border text-ui-text font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-colors flex items-center justify-center gap-2"
                   : "glass-btn-primary col-span-1 text-white font-bold py-3.5 rounded-2xl active:scale-95 text-base transition-all flex items-center justify-center gap-2"
                 }
               >
-                {countdownValue !== null ? <><Icons.Pause /> 取消</> : (isTimerRunning ? <><Icons.Pause /> 暫停</> : <><Icons.Play /> 開始</>)}
+                {isTimerRunning ? <><Icons.Pause /> 暫停</> : <><Icons.Play /> 開始</>}
               </button>
             )}
 
