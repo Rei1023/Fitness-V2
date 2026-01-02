@@ -340,7 +340,7 @@ const App = () => {
   // --- Components ---
 
   const Header = ({ title, showHistory = true, onBack }: { title?: string, showHistory?: boolean, onBack?: () => void }) => (
-    <header className="flex-none px-4 py-3 sm:px-6 sm:py-5 flex items-center justify-between glass-header z-20 sticky top-0">
+    <header className="flex-none px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:px-6 sm:pb-5 sm:pt-[calc(1.25rem+env(safe-area-inset-top))] flex items-center justify-between glass-header z-20 sticky top-0">
       <div className="flex-1 flex justify-start z-10 min-w-[40px]">
         {onBack && (
           <button onClick={onBack} className="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-ui-sub hover:text-ui-text active:scale-95 transition-colors">
