@@ -562,7 +562,7 @@ const App = () => {
     return (
       <div className="fixed inset-0 z-50 flex flex-col h-[100dvh] bg-ui-bg/90 backdrop-blur-[40px]">
         {/* Modal Header */}
-        <div className="flex-none flex justify-between items-center px-5 py-4 bg-white/5 border-b border-ui-border backdrop-blur-md">
+        <div className="flex-none flex justify-between items-center px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] bg-white/5 border-b border-ui-border backdrop-blur-md">
           <button onClick={closeFocusMode} className="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-ui-sub hover:text-ui-text active:scale-95 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"></path></svg>
           </button>
