@@ -286,6 +286,13 @@ const App = () => {
   const startFocusMode = (index?: number) => {
     if (typeof index === 'number') setActiveExerciseIndex(index);
     setView(ViewState.FOCUS);
+
+    // DELAY START: Give UI 500ms to settle heavy blur rendering before starting countdown logic.
+    // This prevents the "stuck at 3" issue on mobile.
+    setCountdownValue(null);
+    setTimeout(() => {
+      setCountdownValue(3);
+    }, 600);
   };
 
   const closeFocusMode = () => {
@@ -308,7 +315,12 @@ const App = () => {
     // End Rest Mode and Start Workout Timer with Countdown
     setIsResting(false);
     resetTimerForCurrentExercise();
-    setCountdownValue(3); // Start countdown
+
+    // DELAY START: Prevent UI freeze
+    setCountdownValue(null);
+    setTimeout(() => {
+      setCountdownValue(3);
+    }, 400); // Shorter delay for rest->work transition as view is already loaded
   };
 
   const completeCurrentExercise = () => {
@@ -562,7 +574,7 @@ const App = () => {
     if (!currentEx) return null;
 
     return (
-      <div className="fixed inset-0 z-50 flex flex-col h-[100dvh] bg-ui-bg/90 backdrop-blur-[40px]">
+      <div className="fixed inset-0 z-50 flex flex-col h-[100dvh] bg-ui-bg/90 backdrop-blur-xl">
         {/* Modal Header */}
         <div className="flex-none flex justify-between items-center px-5 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] bg-white/5 border-b border-ui-border backdrop-blur-md">
           <button onClick={closeFocusMode} className="glass-btn w-10 h-10 rounded-full flex items-center justify-center text-ui-sub hover:text-ui-text active:scale-95 transition-colors">
