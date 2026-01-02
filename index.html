@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta id="meta-theme-color" name="theme-color" content="#F3F4F6">
     <title>Fitness</title>
+    <link rel="icon" type="image/jpeg" href="https://icon-library.com/images/fitness-icon-png/fitness-icon-png-20.jpg">
+    <link rel="apple-touch-icon" href="https://icon-library.com/images/fitness-icon-png/fitness-icon-png-20.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -199,10 +201,18 @@
           border: 2px solid var(--color-brand); 
       }
     </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+  }
+}
+</script>
 </head>
   <body class="antialiased select-none overflow-hidden text-ui-text font-sans h-screen w-screen flex flex-col">
     <!-- SVG Noise Filter is now in CSS data URI -->
     <div id="root" class="h-full w-full"></div>
-    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
