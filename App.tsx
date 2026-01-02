@@ -349,7 +349,7 @@ const App = () => {
         )}
       </div>
 
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-0 flex items-center gap-2 pointer-events-none">
+      <div className="absolute inset-0 z-0 flex items-center justify-center gap-2 pointer-events-none pt-[calc(0.75rem+env(safe-area-inset-top))] pb-3 sm:pt-[calc(1.25rem+env(safe-area-inset-top))] sm:pb-5">
         <span className="text-2xl filter drop-shadow-sm">🏐</span>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-ui-text drop-shadow-sm">{title || 'Fitness'}</h1>
       </div>
