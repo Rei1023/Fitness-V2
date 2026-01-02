@@ -214,21 +214,27 @@ const App = () => {
 
   // Countdown Timer Effect
   // Robust Countdown Logic
+  // 1. Stable Ticking Effect (Runs once when countdown starts)
   useEffect(() => {
     let interval: number;
-    if (countdownValue !== null) {
-      if (countdownValue > 0) {
-        interval = window.setInterval(() => {
-          setCountdownValue(prev => (prev !== null && prev > 0 ? prev - 1 : 0));
-        }, 900); // Slightly faster than 1s to ensure visual snapiness
-      } else if (countdownValue === 0) {
-        // Immediate transition when hitting 0
-        setTimerValue(initialTimerValue);
-        setCountdownValue(null);
-        setIsTimerRunning(true);
-      }
+    if (countdownValue !== null && countdownValue > 0) {
+      interval = window.setInterval(() => {
+        setCountdownValue(prev => {
+          if (prev === null) return null;
+          return prev > 0 ? prev - 1 : 0;
+        });
+      }, 1000);
     }
     return () => clearInterval(interval);
+  }, [countdownValue !== null]); // Only restart if we switch from null <-> number
+
+  // 2. Completion Watcher (Triggers transition)
+  useEffect(() => {
+    if (countdownValue === 0) {
+      setTimerValue(initialTimerValue);
+      setCountdownValue(null);
+      setIsTimerRunning(true);
+    }
   }, [countdownValue, initialTimerValue]);
 
   // Initialize Timer Logic when Exercise changes or Focus mode starts
