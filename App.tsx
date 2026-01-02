@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { BodyPart, ViewState, WorkoutPlan, HistoryRecord, ExerciseCategory } from './types';
-import { PARTS_DISPLAY } from './constants';
+import { PARTS_DISPLAY, EXERCISE_DB } from './constants';
 import { generateWorkout } from './services/workoutGenerator';
 import Metronome from './components/Metronome';
 
@@ -256,6 +256,28 @@ const App = () => {
     setView(ViewState.PLAN);
   };
 
+  const handleSwapExercise = (index: number) => {
+    if (!workout) return;
+    const currentExercise = workout.exercises[index];
+
+    // Find alternatives: Same category, overlapping body parts, exclude current
+    const alternatives = EXERCISE_DB.filter(ex =>
+      ex.category === currentExercise.category &&
+      ex.id !== currentExercise.id &&
+      ex.bodyParts?.some(p => currentExercise.bodyParts?.includes(p))
+    );
+
+    if (alternatives.length > 0) {
+      const randomOriginal = alternatives[Math.floor(Math.random() * alternatives.length)];
+      // Create a new workout object to trigger re-render
+      const newExercises = [...workout.exercises];
+      newExercises[index] = randomOriginal;
+      setWorkout({ ...workout, exercises: newExercises });
+    } else {
+      alert('沒有其他類似的動作可更換');
+    }
+  };
+
   const startFocusMode = (index?: number) => {
     if (typeof index === 'number') setActiveExerciseIndex(index);
     setView(ViewState.FOCUS);
@@ -509,11 +531,11 @@ const App = () => {
                       <p className="text-ui-sub text-xs mt-1 truncate font-medium">{ex.reps || 'Duration based'}</p>
                     </div>
                     <div className="flex flex-col border-l border-ui-border w-14">
-                      <button className="flex-1 flex items-center justify-center text-ui-sub hover:text-brand-text hover:bg-ui-surface transition-colors active:scale-95 border-b border-ui-border">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSwapExercise(idx); }}
+                        className="flex-1 flex items-center justify-center text-ui-sub hover:text-brand-text hover:bg-ui-surface transition-colors active:scale-95 h-full"
+                      >
                         <Icons.Swap />
-                      </button>
-                      <button onClick={() => startFocusMode(idx)} className="flex-1 flex items-center justify-center text-ui-text hover:text-white hover:bg-brand transition-colors active:scale-95">
-                        <Icons.Timer />
                       </button>
                     </div>
                   </div>
