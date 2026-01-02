@@ -211,33 +211,7 @@ const App = () => {
     return () => clearInterval(interval);
   }, [isTimerRunning, view, timerMode]);
 
-  // Countdown Timer Effect
-  // Robust Countdown Logic (Timestamp Delta Method)
-  // Uses high-frequency polling to check against start time, fixing mobile freeze issues.
-  useEffect(() => {
-    if (countdownValue === null) return;
 
-    // Immediate transition if at 0
-    if (countdownValue <= 0) {
-      setTimerValue(initialTimerValue);
-      setCountdownValue(null);
-      setIsTimerRunning(true);
-      return;
-    }
-
-    // Start a fast polling loop to check if 1 second has passed
-    const startTime = Date.now();
-    const interval = window.setInterval(() => {
-      const delta = Date.now() - startTime;
-      if (delta >= 1000) {
-        // Force update regardless of how much time passed (even if frozen for 2s)
-        setCountdownValue(prev => (prev !== null ? prev - 1 : null));
-        clearInterval(interval);
-      }
-    }, 100); // Check every 100ms for precision
-
-    return () => clearInterval(interval);
-  }, [countdownValue, initialTimerValue]);
 
   // Initialize Timer Logic when Exercise changes or Focus mode starts
   const resetTimerForCurrentExercise = useCallback(() => {
@@ -286,12 +260,8 @@ const App = () => {
     if (typeof index === 'number') setActiveExerciseIndex(index);
     setView(ViewState.FOCUS);
 
-    // DELAY START: Give UI 500ms to settle heavy blur rendering before starting countdown logic.
-    // This prevents the "stuck at 3" issue on mobile.
-    setCountdownValue(null);
-    setTimeout(() => {
-      setCountdownValue(3);
-    }, 600);
+    // START IMMEDIATELY (No Countdown)
+    setIsTimerRunning(true);
   };
 
   const closeFocusMode = () => {
@@ -309,15 +279,10 @@ const App = () => {
   };
 
   const handleStartWorkoutFromRest = () => {
-    // End Rest Mode and Start Workout Timer with Countdown
+    // End Rest Mode and Start Workout Timer Immediately
     setIsResting(false);
     resetTimerForCurrentExercise();
-
-    // DELAY START: Prevent UI freeze
-    setCountdownValue(null);
-    setTimeout(() => {
-      setCountdownValue(3);
-    }, 400); // Shorter delay for rest->work transition as view is already loaded
+    setIsTimerRunning(true);
   };
 
   const completeCurrentExercise = () => {
