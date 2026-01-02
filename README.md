@@ -57,7 +57,7 @@ npm run build
 
 **注意**：請確保 GitHub Repository 的 Settings -> Pages -> Source 設置為 "GitHub Actions"。
 
-## 專案結構
+## 專案結構 
 
 - `src/`: 原始碼
 - `public/`: 靜態資源 
